@@ -9,13 +9,13 @@
             <option v-for="region in data.regions" :value="region" v-text="region"></option>
         </select>
         <div class="well search-bar">
-            <button class="btn btn-success" id="update_agent_button" @click="update">
+            <button class="btn btn-success" @click="update">
                 <i class="icon-arrow-up"></i><span v-text="i18n('agent.list.update')"></span>
             </button>
-            <button class="btn" id="cleanup_agent_button" @click="cleanUp">
+            <button class="btn" @click="cleanup">
                 <i class="icon-trash"></i><span v-text="i18n('common.button.cleanup')"></span>
             </button>
-            <button class="btn" id="stop_agent_button" @click="stopAgents">
+            <button class="btn" @click="stopAgents">
                 <i class="icon-stop"></i><span v-text="i18n('common.button.stop')"></span>
             </button>
 
@@ -44,8 +44,9 @@
             </colgroup>
             <thead>
             <tr>
-                <th class="no-click nothing"><input type="checkbox" class="checkbox" v-model="selectAll"
-                                                    @change="changeSelectAll"></th>
+                <th class="no-click nothing">
+                    <input type="checkbox" class="checkbox" v-model="selectAll" @change="changeSelectAll">
+                </th>
                 <th v-text="i18n('agent.list.state')"></th>
                 <th v-text="i18n('agent.list.IPAndDns')"></th>
                 <th class="no-click" v-text="i18n('agent.list.port')"></th>
@@ -61,8 +62,8 @@
                     <td class="center">
                         <input type="checkbox" class="agent-state checkbox" v-model="selectedAgents" :value="agent.id">
                     </td>
-                    <td class="center" :id="'row_' +agent.id ">
-                        <div class="ball" :id="'ball_' + agent.id " data-html="true" rel="popover">
+                    <td class="center">
+                        <div class="ball" data-html="true" rel="popover">
                             <img class="status" :src="`/img/ball/${agent.state.iconName}`"/>
                         </div>
                     </td>
@@ -71,19 +72,19 @@
                             <a :href="`/agent/${agent.id}`" target="_self" :value="agent.ip" v-text="agent.ip"></a>
                         </div>
                     </td>
-                    <td id="'port_'+agent.id" v-text="agent.port"></td>
+                    <td v-text="agent.port"></td>
                     <td class="ellipsis agent-name" :title="agent.hostName" v-text="agent.hostName"></td>
                     <td class="ellipsis" v-text="agent.version || 'Prior to 3.3'"></td>
                     <td class="ellipsis" :title="agent.region" v-text="agent.region"></td>
                     <td>
                         <div class="btn-group" data-toggle="buttons-radio">
-                            <button type="button" class="btn btn-xs btn-primary disapproved"
+                            <button type="button" class="btn btn-mini btn-primary disapproved"
                                     :class="{ active: !agent.approved }"
-                                    :sid="agent.id" v-text="i18n('agent.list.disapproved')" @click="disapprove(agent)">
+                                    v-text="i18n('agent.list.disapproved')" @click="disapprove(agent)">
                             </button>
-                            <button type="button" class="btn btn-xs btn-primary approved"
+                            <button type="button" class="btn btn-mini btn-primary approved"
                                     :class="{ active: agent.approved }"
-                                    :sid="agent.id" v-text="i18n('agent.list.approved')" @click="approve(agent)">
+                                    v-text="i18n('agent.list.approved')" @click="approve(agent)">
                             </button>
                         </div>
                     </td>
@@ -94,17 +95,20 @@
             </tr>
             </tbody>
         </table>
+        <!-- TODO: Paginate using datatables -->
     </div>
 </template>
 
 <script>
     import Component from 'vue-class-component';
+    import { Mixins } from 'vue-mixin-decorator';
     import Base from '../Base.vue';
+    import MessagesMixin from '../common/mixin/MessagesMixin.vue';
 
     @Component({
         name: 'agentList',
     })
-    export default class AgentList extends Base {
+    export default class AgentList extends Mixins(Base, MessagesMixin) {
         regions = [];
         region = '';
 
@@ -149,23 +153,74 @@
         }
 
         update() {
-            // update
+            if (this.selectedAgents.length === 0) {
+                bootbox.alert(
+                    this.i18n('agent.message.common.noagent'),
+                    this.i18n('common.button.ok'));
+                return;
+            }
+
+            const $confirm = bootbox.confirm(
+                this.i18n('agent.message.update.confirm'),
+                this.i18n('common.button.cancel'),
+                this.i18n('common.button.ok'),
+                result => {
+                    if (result) {
+                        this.$http.put('/agent/api?action=update', null, this.ids)
+                            .then(() => this.showSuccessMsg(this.i18n('agent.message.update.success')))
+                            .catch(() => this.showErrorMsg(this.i18n('agent.message.update.error')))
+                            .finally(() => this.selectedAgents = []);
+                    }
+                });
+            $confirm.children('.modal-body').addClass('error-color');
         }
 
-        cleanUp() {
-            // cleanUp
+        cleanup() {
+            bootbox.confirm(
+                this.i18n('agent.message.cleanup.confirm'),
+                this.i18n('common.button.cancel'),
+                this.i18n('common.button.ok'),
+                result => {
+                    if (result) {
+                        this.$http.post('/agent/api?action=cleanup', null, this.ids)
+                            .then(() => this.showSuccessMsg(this.i18n('agent.message.cleanup.success')))
+                            .catch(() => this.showErrorMsg(this.i18n('agent.message.cleanup.error')))
+                            .finally(() => this.selectedAgents = []);
+                    }
+                });
         }
 
         stopAgents() {
-            // stop
+            if (this.selectedAgents.length === 0) {
+                bootbox.alert(
+                    this.i18n('agent.message.common.noagent'),
+                    this.i18n('common.button.ok'));
+                return;
+            }
+
+            const $confirm = bootbox.confirm(
+                this.i18n('agent.message.stop.confirm'),
+                this.i18n('common.button.cancel'),
+                this.i18n('common.button.ok'),
+                result => {
+                    if (result) {
+                        this.$http.put('/agent/api?action=stop', null, this.ids)
+                            .then(() => this.showSuccessMsg(this.i18n('agent.message.stop.success')))
+                            .catch(() => this.showErrorMsg(this.i18n('agent.message.stop.error')))
+                            .finally(() => this.selectedAgents = []);
+                    }
+                });
+            $confirm.children('.modal-body').addClass('error-color');
         }
 
         approve(agent) {
-            // approve
+            this.$http.put(`/agent/api/${agent.id}?action=approve`)
+                .then(() => this.i18n('agent.message.approve'));
         }
 
         disapprove(agent) {
-            // disapprove
+            this.$http.put(`/agent/api/${agent.id}?action=disapprove`)
+                .then(() => this.i18n('agent.message.disapprove'));
         }
 
         changeSelectAll(event) {
@@ -175,12 +230,24 @@
                 this.selectedAgents = [];
             }
         }
+
+        get ids() {
+            return { params: { ids: this.selectedAgents.join(',') } };
+        }
     }
 </script>
 
 <style lang="less" scoped>
+    table {
+        font-size: 12px;
+    }
+
     .change-region {
         margin-top: -53px;
         width: 150px;
+    }
+
+    .search-bar .btn i {
+        padding-right: 1px;
     }
 </style>

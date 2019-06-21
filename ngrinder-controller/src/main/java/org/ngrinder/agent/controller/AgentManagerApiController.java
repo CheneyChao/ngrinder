@@ -133,7 +133,7 @@ public class AgentManagerApiController extends BaseController {
 	 * Clean up the agents in the inactive region
 	 */
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "", params = "action=cleanup", method = RequestMethod.POST)
+	@PostMapping(value = "", params = "action=cleanup")
 	public HttpEntity<String> cleanUpAgentsInInactiveRegion() {
 		agentManagerService.cleanup();
 		return successJsonHttpEntity();
@@ -150,7 +150,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping("/state")
+	@GetMapping("/state")
 	public HttpEntity<String> getState(@RequestParam String ip, @RequestParam String name, @RequestParam String region) {
 		return toJsonHttpEntity(agentManagerService.getSystemDataModel(ip, name, region));
 	}
@@ -162,7 +162,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = {"/", ""}, method = RequestMethod.GET)
+	@GetMapping(value = {"/", ""})
 	public HttpEntity<String> getAll() {
 		return toJsonHttpEntity(agentManagerService.getAllVisible());
 	}
@@ -174,9 +174,9 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
-	public HttpEntity<String> getOne(@PathVariable("id") Long id) {
-		return toJsonHttpEntity(agentManagerService.getOne(id));
+	@GetMapping(value = "/{id}")
+	public AgentInfo getOne(@PathVariable("id") Long id) {
+		return agentManagerService.getOne(id);
 	}
 
 	/**
@@ -187,7 +187,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "/{id}", params = "action=approve", method = RequestMethod.PUT)
+	@PutMapping(value = "/{id}", params = "action=approve")
 	public HttpEntity<String> approve(@PathVariable("id") Long id) {
 		agentManagerService.approve(id, true);
 		return successJsonHttpEntity();
@@ -201,7 +201,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "/{id}", params = "action=disapprove", method = RequestMethod.PUT)
+	@PutMapping(value = "/{id}", params = "action=disapprove")
 	public HttpEntity<String> disapprove(@PathVariable("id") Long id) {
 		agentManagerService.approve(id, false);
 		return successJsonHttpEntity();
@@ -215,7 +215,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "/{id}", params = "action=stop", method = RequestMethod.PUT)
+	@PutMapping(value = "/{id}", params = "action=stop")
 	public HttpEntity<String> stop(@PathVariable("id") Long id) {
 		agentManagerService.stopAgent(id);
 		return successJsonHttpEntity();
@@ -229,7 +229,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "", params = "action=stop", method = RequestMethod.PUT)
+	@PutMapping(value = "", params = "action=stop")
 	public HttpEntity<String> stop(@RequestParam("ids") String ids) {
 		String[] split = StringUtils.split(ids, ",");
 		for (String each : split) {
@@ -246,7 +246,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "/{id}", params = "action=update", method = RequestMethod.PUT)
+	@PutMapping(value = "/{id}", params = "action=update")
 	public HttpEntity<String> update(@PathVariable("id") Long id) {
 		agentManagerService.update(id);
 		return successJsonHttpEntity();
@@ -260,7 +260,7 @@ public class AgentManagerApiController extends BaseController {
 	 */
 	@RestAPI
 	@PreAuthorize("hasAnyRole('A')")
-	@RequestMapping(value = "", params = "action=update", method = RequestMethod.PUT)
+	@PutMapping(value = "", params = "action=update")
 	public HttpEntity<String> update(@RequestParam("ids") String ids) {
 		String[] split = StringUtils.split(ids, ",");
 		for (String each : split) {

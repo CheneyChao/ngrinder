@@ -23,4 +23,5 @@ target/
 *.iml
 /atlassian-ide-plugin.xml
 src/main/generated/
-
+.gradle
+**/bin/
